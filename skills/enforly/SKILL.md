@@ -48,6 +48,7 @@ async function guarded<T>(policy: string, data: unknown, run: () => Promise<T>) 
 ```
 
 - `deny` → stop. `review` → stop and escalate to a human or ask the user for the missing evidence. Errors → stop.
+- `review` comes back when the policy hands the case to a person ("...a person decides", "...needs manager approval") and that approval is not in `data`, or when the evidence is unclear.
 - Do not add a fallback that runs the operation when Enforly is unreachable. Fail closed.
 - Log `requestId` to correlate with the Enforly dashboard activity.
 
@@ -93,6 +94,7 @@ await guard.check({
 - State the rule and its exception in one or two sentences: "Never X unless Y."
 - Name the evidence that satisfies the exception, so the caller knows what to send in `data`.
 - One concern per policy; combine them with `policyIds`.
+- To route a case to a person instead of blocking it, say so in the policy: `Refund damaged products. If the customer already used them, a person decides.` That case returns `review`; once `data` includes the approval, it can return `allow`.
 
 Examples:
 - `Never allow destructive database operations (DROP, TRUNCATE, DELETE or UPDATE without WHERE) unless the user explicitly confirmed this specific operation.`
@@ -182,16 +184,16 @@ The same call works without any agent: check a webhook payload before accepting 
 Single policy (`policy` or `policyId`):
 
 ```json
-{ "decision": "deny", "allowed": false, "violationProbability": 0.94, "policyId": null, "policyVersion": null, "requestId": "..." }
+{ "decision": "deny", "allowed": false, "violationProbability": 0.94, "reviewProbability": 0.04, "policyId": null, "policyVersion": null, "requestId": "..." }
 ```
 
 Multiple policies (`policyIds`):
 
 ```json
-{ "decision": "review", "allowed": false, "results": [{ "policyId": "...", "policyVersion": 3, "decision": "review", "violationProbability": 0.55 }], "requestId": "..." }
+{ "decision": "review", "allowed": false, "results": [{ "policyId": "...", "policyVersion": 3, "decision": "review", "violationProbability": 0.08, "reviewProbability": 0.91 }], "requestId": "..." }
 ```
 
-`violationProbability` (0-1) is a model estimate, not proof. `policyId`/`policyVersion` are `null` for inline policies.
+`violationProbability` and `reviewProbability` (0-1) are model estimates, not proof: the chance the data breaks the policy, and the chance the policy leaves this case to a person whose approval is missing. `policyId`/`policyVersion` are `null` for inline policies.
 
 ## Errors
 
