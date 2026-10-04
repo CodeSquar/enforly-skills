@@ -20,8 +20,11 @@ Or copy [`skills/enforly`](skills/enforly) into your agent's skills directory (f
 
 - Install `@enforly/sdk` and keep `ENFORLY_API_KEY` server-side.
 - Use inline `policy`, a saved `policyId`, or up to the plan limit of `policyIds`.
+- Pin a saved policy version, or rely on the tenant's active version (rollback via dashboard or `policies.activate`).
+- Deactivate saved policies (`policies.delete` returns `{ id, deactivated: true }`); checks using a deactivated ID fail with `POLICY_NOT_FOUND`.
 - Proceed only on `allow`; stop on `deny`, `review`, and every error.
 - Put the exact operation and its evidence in `data`.
+- Write policies that say who approves, and resolve a `review` by checking again with the approval in `data`.
 - Recipes for agent tool calls, a Claude Code PreToolUse hook, and non-AI checks.
 
 Get a free API key at [enforly.com](https://enforly.com).
